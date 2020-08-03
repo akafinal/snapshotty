@@ -63,10 +63,23 @@ help='Only instances for project (tag Project:<name>)')
 def create_snapshots(project):
     'Create EC2 snapshots'
     instances = filter_instances(project)
+    ins = []
     for i in instances:
+        if i.state['Name'] == 'running': ins.append(i)
+
+        print('Stopping {0}'.format(i.id))
+        i.stop()
+        i.wait_until_stopped()
+
         for v in i.volumes.all():
             print('Making snapshots of {0}'.format(i.id))
             v.create_snapshot(Description='Created by snapshotty')
+
+        for j in ins:
+            print('Starting {0} that were running before'.format(j.id))
+            j.start()
+            j.wait_until_running()
+    print("Job's done!")
     return
 
 if __name__ == '__main__':
